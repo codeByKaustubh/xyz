@@ -1,86 +1,80 @@
-#Support Vector Machines (SVM)
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+#Write a program using Selenium WebDriver to update 10 student records in an Excel file. Perform data manipulation and verification
 
-from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import java.io.File;
+import java.io.IOException;
+import jxl.Sheet;
+import jxl.Workbook;
+import jxl.read.biff.BiffException;
+import jxl.write.Number;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
+import org.testng.annotations.Test;
 
-# Generate synthetic dataset
-X, y = make_classification(n_samples=300, n_features=2, n_redundant=0,
-                           n_informative=2, n_clusters_per_class=1,
-                           random_state=42)
+public class StudentUpdate {
 
-# Split into train/test
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.3, random_state=42, stratify=y
-)
+    private static final String INPUT_FILE =
+            "C:\\Users\\aman1\\OneDrive\\Documents\\student_records.xls";
+    private static final String OUTPUT_FILE =
+            "C:\\Users\\aman1\\OneDrive\\Documents\\student_records_updated.xls";
 
-print("Training samples:", X_train.shape[0])
-print("Test samples:", X_test.shape[0])
+    @Test
+    public void testImportExport() throws IOException, BiffException, WriteException {
+        File inputWorkbook = new File(INPUT_FILE);
+        Workbook w = null;
+        WritableWorkbook copy = null;
 
-# Initialize with linear kernel
-svm = SVC(kernel="linear", C=1.0, random_state=42)
+        try {
+            // Open input Excel file
+            w = Workbook.getWorkbook(inputWorkbook);
+            Sheet s = w.getSheet(0);
 
-# Train
-svm.fit(X_train, y_train)
+            // Create writable copy
+            copy = Workbook.createWorkbook(new File(OUTPUT_FILE), w);
+            WritableSheet sheet = copy.getSheet(0);
 
-# Predict
-y_pred = svm.predict(X_test)
+            int studentsAbove60 = 0;
+            int totalRows = s.getRows();
 
-print("Accuracy:", accuracy_score(y_test, y_pred))
-print("\nClassification Report:\n", classification_report(y_test, y_pred))
+            // Process each student record (skip header)
+            for (int i = 1; i < totalRows; i++) {
+                String studentStr = s.getCell(0, i).getContents().trim();
+                String marksStr = s.getCell(1, i).getContents().trim();
 
-# Define parameter grid
-param_grid = {
-    'C': [0.1, 1, 10],
-    'kernel': ['linear', 'rbf', 'poly'],
-    'gamma': ['scale', 'auto']
+                try {
+                    int studentNumber = Integer.parseInt(studentStr);
+                    int marks = Integer.parseInt(marksStr);
+                    int updatedMarks = marks + 10;
+
+                    // Write updated marks
+                    Number updatedMarksCell = new Number(1, i, updatedMarks);
+                    sheet.addCell(updatedMarksCell);
+
+                    // Count students who originally scored above 60
+                    if (marks > 60) {
+                        studentsAbove60++;
+                    }
+
+                    System.out.println("Record updated for student " + studentNumber + ": " +
+                            marks + " -> " + updatedMarks);
+
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid data at row " + (i + 1) + ": " +
+                            studentStr + ", " + marksStr);
+                }
+            }
+
+            // Write and close
+            copy.write();
+            System.out.println("\n✅ All records successfully updated!");
+            System.out.println("📊 Number of students who scored above 60 (before update): " +
+                    studentsAbove60);
+
+        } catch (IOException | BiffException | WriteException e) {
+            e.printStackTrace();
+        } finally {
+            if (copy != null) copy.close();
+            if (w != null) w.close();
+        }
+    }
 }
-
-# Grid Search with 5-fold CV
-grid = GridSearchCV(SVC(random_state=42), param_grid, cv=5, scoring='accuracy')
-grid.fit(X_train, y_train)
-
-print("Best Parameters:", grid.best_params_)
-print("Best Cross-Validation Score:", grid.best_score_)
-
-# Best model
-best_svm = grid.best_estimator_
-
-# Predictions
-y_best_pred = best_svm.predict(X_test)
-
-# Accuracy
-print("Test Accuracy:", accuracy_score(y_test, y_best_pred))
-print("\nClassification Report:\n", classification_report(y_test, y_best_pred))
-
-# Confusion Matrix
-cm = confusion_matrix(y_test, y_best_pred)
-sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
-plt.xlabel("Predicted")
-plt.ylabel("Actual")
-plt.title("Confusion Matrix")
-plt.show()
-
-def plot_decision_boundary(model, X, y):
-    h = 0.02
-    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                         np.arange(y_min, y_max, h))
-
-    Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
-    Z = Z.reshape(xx.shape)
-
-    plt.contourf(xx, yy, Z, alpha=0.3, cmap=plt.cm.coolwarm)
-    plt.scatter(X[:, 0], X[:, 1], c=y, s=40, edgecolors='k', cmap=plt.cm.coolwarm)
-    plt.xlabel("Feature 1")
-    plt.ylabel("Feature 2")
-    plt.title("SVM Decision Boundary")
-    plt.show()
-
-plot_decision_boundary(best_svm, X, y)
