@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <pre>
+#diffie-hellman key exchange algorithm
+from random import randint
+if __name__ == '__main__':
+  
+    q = 23	
+    alpha = 9
+         
+    print('The Value of q is :%d'%(q))
+    print('The Value of alpha is :%d'%(alpha))
+     
+    XA = 4
+    print('Secret Number for Alice is :%d'%(XA))
+     
+    YA = int(pow(alpha,XA,q)) 
+
+    XB = 6
+    print('Secret Number for Bob is :%d'%(XB))
+   
+    YB = int(pow(alpha,XB,q)) 
+
+    k1 = int(pow(YB,XA,q))
+  
+    k2 = int(pow(YA,XB,q))
+     
+    print('Secret key for the Alice is : %d'%(k1))
+    print('Secret Key for the Bob is : %d'%(k2))
+
+    </pre>
+</body>
+</html>
