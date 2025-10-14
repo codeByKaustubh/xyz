@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        a{
+            color: #ffffff;
+            text-decoration: none; 
+        }
+    </style>
+</head>
+<body>
+    <pre>
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
+import time
+
+driver = webdriver.Chrome()
+try:
+    driver.get("https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_select")
+    time.sleep(2)
+    driver.switch_to.frame("iframeResult")
+    dropdown_element = driver.find_element(By.TAG_NAME, "select")
+    select = Select(dropdown_element)
+    options = select.options
+    count = len(options)
+    print("Items available in the combo box:")
+    for i, option in enumerate(options, 1):
+        print(f"{i}. {option.text}")
+    print(f"\nTotal number of items in the combo box: {count}")
+finally:
+    driver.quit()
+    </pre>
+</body>
+</html>

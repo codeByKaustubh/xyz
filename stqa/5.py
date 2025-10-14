@@ -1,80 +1,83 @@
-#Write a program using Selenium WebDriver to update 10 student records in an Excel file. Perform data manipulation and verification
+import os
+import openpyxl
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException
+import time
 
-import java.io.File;
-import java.io.IOException;
-import jxl.Sheet;
-import jxl.Workbook;
-import jxl.read.biff.BiffException;
-import jxl.write.Number;
-import jxl.write.WritableSheet;
-import jxl.write.WritableWorkbook;
-import jxl.write.WriteException;
-import org.testng.annotations.Test;
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+EXCEL_PATH = os.path.join(SCRIPT_DIR, "students.xlsx")
 
-public class StudentUpdate {
+def create_initial_excel_file():
+    if not os.path.exists(EXCEL_PATH):
+        print(f"'{os.path.basename(EXCEL_PATH)}' not found. Creating a new file...")
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.title = "Student Grades"
+        headers = ["ID", "Student Name", "Grade", "Status"]
+        sheet.append(headers)
+        for i in range(1, 11):
+            sheet.append([i, f"Student {i}", "C", "Pending Update"])
+        workbook.save(EXCEL_PATH)
+        print("Sample 'students.xlsx' created successfully.")
 
-    private static final String INPUT_FILE =
-            "C:\\Users\\aman1\\OneDrive\\Documents\\student_records.xls";
-    private static final String OUTPUT_FILE =
-            "C:\\Users\\aman1\\OneDrive\\Documents\\student_records_updated.xls";
+def main():
+    create_initial_excel_file()
+    try:
+        workbook = openpyxl.load_workbook(EXCEL_PATH)
+        sheet = workbook.active
+    except FileNotFoundError:
+        print(f"Error: Could not find the Excel file at {EXCEL_PATH}")
+        return
 
-    @Test
-    public void testImportExport() throws IOException, BiffException, WriteException {
-        File inputWorkbook = new File(INPUT_FILE);
-        Workbook w = null;
-        WritableWorkbook copy = null;
+    print("\nInitializing WebDriver...")
+    driver = webdriver.Chrome()
+    try:
+        driver.get("https://www.w3schools.com/html/html_tables.asp")
+        driver.maximize_window()
+        time.sleep(2)
 
-        try {
-            // Open input Excel file
-            w = Workbook.getWorkbook(inputWorkbook);
-            Sheet s = w.getSheet(0);
+        print("Extracting data from W3Schools table...")
+        rows = driver.find_elements(By.XPATH, '//*[@id="customers"]/tbody/tr')
+        web_data = []
+        for row in rows[1:]:
+            cells = row.find_elements(By.TAG_NAME, "td")
+            if len(cells) >= 2:
+                company = cells[0].text
+                contact = cells[1].text
+                web_data.append({'name': company, 'detail': contact})
 
-            // Create writable copy
-            copy = Workbook.createWorkbook(new File(OUTPUT_FILE), w);
-            WritableSheet sheet = copy.getSheet(0);
+        student_count = min(10, len(web_data))
+        print(f"Found {len(web_data)} records. Will update {student_count} records in Excel.\n")
 
-            int studentsAbove60 = 0;
-            int totalRows = s.getRows();
+        for i in range(student_count):
+            excel_row_index = i + 2
+            data_to_update = web_data[i]
+            student_id = sheet.cell(row=excel_row_index, column=1).value
+            new_student_name = data_to_update['name']
+            new_grade = "A+"
+            new_status = f"Updated with contact: {data_to_update['detail']}"
+            sheet.cell(row=excel_row_index, column=2, value=new_student_name)
+            sheet.cell(row=excel_row_index, column=3, value=new_grade)
+            sheet.cell(row=excel_row_index, column=4, value=new_status)
+            print(f"Record Updated: ID={student_id}, Name='{new_student_name}', Grade='{new_grade}'")
 
-            // Process each student record (skip header)
-            for (int i = 1; i < totalRows; i++) {
-                String studentStr = s.getCell(0, i).getContents().trim();
-                String marksStr = s.getCell(1, i).getContents().trim();
+        workbook.save(EXCEL_PATH)
+        print(f"\nSuccessfully saved all updates to '{os.path.basename(EXCEL_PATH)}'.")
 
-                try {
-                    int studentNumber = Integer.parseInt(studentStr);
-                    int marks = Integer.parseInt(marksStr);
-                    int updatedMarks = marks + 10;
+        print("\nVerifying updated records in Excel:")
+        for i in range(2, student_count + 2):
+            student_name = sheet.cell(row=i, column=2).value
+            status = sheet.cell(row=i, column=4).value
+            print(f"Row {i-1}: Name='{student_name}', Status='{status}'")
 
-                    // Write updated marks
-                    Number updatedMarksCell = new Number(1, i, updatedMarks);
-                    sheet.addCell(updatedMarksCell);
+    except NoSuchElementException:
+        print("Error: Could not find the required elements on the webpage.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+    finally:
+        driver.quit()
+        print("\nData Manipulation and Verification Completed Successfully.")
 
-                    // Count students who originally scored above 60
-                    if (marks > 60) {
-                        studentsAbove60++;
-                    }
-
-                    System.out.println("Record updated for student " + studentNumber + ": " +
-                            marks + " -> " + updatedMarks);
-
-                } catch (NumberFormatException e) {
-                    System.out.println("Invalid data at row " + (i + 1) + ": " +
-                            studentStr + ", " + marksStr);
-                }
-            }
-
-            // Write and close
-            copy.write();
-            System.out.println("\n✅ All records successfully updated!");
-            System.out.println("📊 Number of students who scored above 60 (before update): " +
-                    studentsAbove60);
-
-        } catch (IOException | BiffException | WriteException e) {
-            e.printStackTrace();
-        } finally {
-            if (copy != null) copy.close();
-            if (w != null) w.close();
-        }
-    }
-}
+if __name__ == "__main__":
+    main()

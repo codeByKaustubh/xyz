@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        a{
+            color: #ffffff;
+            text-decoration: none; 
+        }
+    </style>
+</head>
+<body>
+    <pre>
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import time
+import os
+
+# --- Step 1: Launch Browser ---
+driver = webdriver.Chrome()
+
+# Create an absolute path to your HTML file
+html_file_path = os.path.abspath('students.html')
+driver.get(f"C:\\Users\\Administrator\\Desktop\\dabbewale clone\\xyz\\stqa\\table.html")
+time.sleep(1)
+
+print("[Selenium] Student Marks Analysis Started...\n")
+
+# --- Step 2: Extract all rows except header ---
+rows = driver.find_elements(By.XPATH, "//table//tr[position()>1]")
+
+count_above_60 = 0
+
+# --- Step 3: Data Extraction & Analysis ---
+for row in rows:
+    cells = row.find_elements(By.TAG_NAME, "td")
+    if len(cells) == 5:
+        student_id = cells[0].text.strip()
+        name = cells[1].text.strip()
+        maths = int(cells[2].text.strip())
+        science = int(cells[3].text.strip())
+        english = int(cells[4].text.strip())
+        if maths > 60 or science > 60 or english > 60:
+            print(f"Student {student_id} ({name}) scored above 60")
+            count_above_60 += 1
+
+# --- Step 4: Summary Report ---
+print(f"\nTotal number of students who scored above 60: {count_above_60}")
+
+# --- Step 5: Close Browser ---
+driver.quit()
+    </pre>
+</body>
+</html>

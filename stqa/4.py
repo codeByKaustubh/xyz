@@ -20,5 +20,5 @@ first_item = driver.find_element(By.CLASS_NAME, "inventory_item")
 assert first_item.is_displayed(), "First inventory item is not displayed"
 first_item_name = first_item.find_element(By.CLASS_NAME, "inventory_item_name").text
 print(f"First item name: {first_item_name}")
-print("Test PASSED: Mr. RDNC, your LOGIN is successful and first inventory item is verified")
+print("Test passed, your LOGIN is successful and first inventory item is verified")
 driver.quit()

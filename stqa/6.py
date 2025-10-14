@@ -1,54 +1,38 @@
-#Write a program using Selenium WebDriver to select the number of students who have scored more than 60 in any one subject (or all subjects). Perform data extraction and analysis.
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+import time
+import os
 
-import java.io.File;
-import java.io.IOException;
-import jxl.Sheet;
-import jxl.Workbook;
-import jxl.read.biff.BiffException;
-import org.testng.annotations.*;
+# --- Step 1: Launch Browser ---
+driver = webdriver.Chrome()
 
-public class Studentupdate {
+# Create an absolute path to your HTML file
+html_file_path = os.path.abspath('students.html')
+driver.get(f"C:\\Users\\Administrator\\Desktop\\dabbewale clone\\xyz\\stqa\\table.html")
+time.sleep(1)
 
-    private static final String INPUT_FILE =
-        "C:\\Users\\aman1\\OneDrive\\Documents\\student_records.xls";
+print("[Selenium] Student Marks Analysis Started...\n")
 
-    @Test
-    public void testImportexport1() throws IOException, BiffException {
-        File inputWorkbook = new File(INPUT_FILE);
-        Workbook w;
+# --- Step 2: Extract all rows except header ---
+rows = driver.find_elements(By.XPATH, "//table//tr[position()>1]")
 
-        try {
-            w = Workbook.getWorkbook(inputWorkbook);
-            Sheet s = w.getSheet(0);
-            int studentsAbove60 = 0;
+count_above_60 = 0
 
-            // Process data
-            for (int i = 1; i <= 10; i++) {
-                String studentStr = s.getCell(0, i).getContents();
-                String marksStr = s.getCell(1, i).getContents();
+# --- Step 3: Data Extraction & Analysis ---
+for row in rows:
+    cells = row.find_elements(By.TAG_NAME, "td")
+    if len(cells) == 5:
+        student_id = cells[0].text.strip()
+        name = cells[1].text.strip()
+        maths = int(cells[2].text.strip())
+        science = int(cells[3].text.strip())
+        english = int(cells[4].text.strip())
+        if maths > 60 or science > 60 or english > 60:
+            print(f"Student {student_id} ({name}) scored above 60")
+            count_above_60 += 1
 
-                try {
-                    int studentNumber = Integer.parseInt(studentStr);
-                    int marks = Integer.parseInt(marksStr);
+# --- Step 4: Summary Report ---
+print(f"\nTotal number of students who scored above 60: {count_above_60}")
 
-                    // Check if the marks are above 60
-                    if (marks > 60) {
-                        studentsAbove60++;
-                        System.out.println("Student " + studentNumber +
-                                           " scored above 60: " + marks);
-                    }
-                } catch (NumberFormatException e) {
-                    System.out.println("Invalid data for student in row " +
-                                       (i + 1) + ": " + studentStr + ", " + marksStr);
-                }
-            }
-
-            w.close();
-            System.out.println("Number of students who scored above 60: " +
-                               studentsAbove60);
-
-        } catch (IOException | BiffException e) {
-            e.printStackTrace();
-        }
-    }
-}
+# --- Step 5: Close Browser ---
+driver.quit()
